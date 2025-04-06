@@ -4,170 +4,143 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Carteles Global Tour</title>
-  <link href="https://fonts.googleapis.com/css2?family=Miracle+Fairway&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Miracle+Fairway&display=swap" rel="stylesheet" />
   <style>
-    * {
-      box-sizing: border-box;
-    }
     body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Arial', sans-serif;
-      background-color: #0e0e0e;
+      background-color: #000;
       color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      min-height: 100vh;
-      padding: 40px 20px;
+      font-family: 'Miracle Fairway', sans-serif;
+      text-align: center;
+      padding: 2rem;
     }
     h1 {
-      font-family: 'Miracle Fairway', serif;
-      font-size: 48px;
-      color: #00ff88;
-      margin-bottom: 30px;
-    }
-    input[type="file"] {
-      display: inline-block;
-      padding: 10px;
-      margin: 10px 0;
-      background-color: #222;
-      border: 2px solid #00ff88;
-      color: white;
-      cursor: pointer;
-      border-radius: 8px;
+      font-size: 3rem;
+      margin-bottom: 1.5rem;
+      color: #d10607;
     }
     canvas {
-      margin: 20px auto;
-      border: 2px solid #333;
-      box-shadow: 0 0 20px rgba(0,255,136,0.2);
-      border-radius: 10px;
-      max-width: 100%;
-      opacity: 0;
-      transition: opacity 0.6s ease-in-out;
+      margin-top: 1rem;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
+      border-radius: 1rem;
     }
-    .btn {
-      background-color: #00ff88;
-      color: #000;
-      padding: 12px 24px;
+    button, input[type="file"] {
+      margin: 1rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
       border: none;
-      border-radius: 6px;
-      font-size: 18px;
-      font-weight: bold;
+      font-size: 1rem;
       cursor: pointer;
-      margin: 10px;
+      background-color: #d10607;
+      color: white;
       transition: background-color 0.3s;
     }
-    .btn:hover {
-      background-color: #00cc6f;
-    }
-    .button-group {
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
+    button:hover {
+      background-color: #a20405;
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix"></script>
 </head>
 <body>
   <h1>Carteles Global Tour</h1>
   <input type="file" id="upload" accept="image/*" />
   <canvas id="canvas" width="1184" height="1800"></canvas>
-  <div class="button-group">
-    <button class="btn" onclick="downloadImage()">Descargar Imagen</button>
-    <button class="btn" onclick="resetApp()">Subir otra foto</button>
-  </div>
+  <br />
+  <button id="download">Descargar cartel</button>
+  <button id="reset">Subir otra foto</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.13.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.2.0"></script>
 
   <script>
-    const upload = document.getElementById("upload");
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
-    const SVG_URL = "https://muyalboranista.github.io/GlobalTour/GlobalTour.svg"; // ← Cambia esta URL
+    const upload = document.getElementById('upload');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const downloadBtn = document.getElementById('download');
+    const resetBtn = document.getElementById('reset');
 
-    async function processImage(img) {
-      const offCanvas = document.createElement("canvas");
-      offCanvas.width = img.width;
-      offCanvas.height = img.height;
-      const offCtx = offCanvas.getContext("2d");
-      offCtx.drawImage(img, 0, 0);
+    const drawSVG = () => {
+      const svg = `https://muyalboranista.github.io/GlobalTour/GlobalTour.svg`;
+      const img = new Image();
+      const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    };
 
-      const net = await bodyPix.load();
-      const segmentation = await net.segmentPerson(offCanvas);
-      const imageData = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
-      const data = imageData.data;
+    const toGrayscale = (imageData) => {
+      for (let i = 0; i < imageData.data.length; i += 4) {
+        const avg = (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3;
+        imageData.data[i] = avg;
+        imageData.data[i + 1] = avg;
+        imageData.data[i + 2] = avg;
+      }
+      return imageData;
+    };
 
-      for (let i = 0; i < data.length; i += 4) {
-        const segIndex = i / 4;
-        if (segmentation.data[segIndex] === 0) {
-          data[i + 3] = 0;
+    const processImage = async (file) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = async () => {
+        const net = await bodyPix.load();
+        const segmentation = await net.segmentPerson(img);
+
+        // Create an offscreen canvas to handle the masked image
+        const offCanvas = document.createElement('canvas');
+        const offCtx = offCanvas.getContext('2d');
+        offCanvas.width = img.width;
+        offCanvas.height = img.height;
+        offCtx.drawImage(img, 0, 0);
+
+        const imageData = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
+        for (let i = 0; i < segmentation.data.length; i++) {
+          if (segmentation.data[i] === 0) {
+            imageData.data[i * 4 + 3] = 0; // Set alpha to 0 if not part of the person
+          }
         }
-      }
-      offCtx.putImageData(imageData, 0, 0);
+        offCtx.putImageData(imageData, 0, 0);
 
-      // Fondo rojo sólido
-      ctx.fillStyle = "#d40205";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Resize the result to fit height 1800
+        const scale = 1800 / img.height;
+        const newWidth = img.width * scale;
+        const newHeight = 1800;
 
-      const scale = Math.min(canvas.width / offCanvas.width, canvas.height / offCanvas.height);
-      const x = (canvas.width - offCanvas.width * scale) / 2;
-      const y = (canvas.height - offCanvas.height * scale) / 2;
-      ctx.drawImage(offCanvas, 0, 0, offCanvas.width, offCanvas.height, x, y, offCanvas.width * scale, offCanvas.height * scale);
+        // Draw final result
+        ctx.fillStyle = '#d10607';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Blanco y negro
-      const bwImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const d = bwImageData.data;
-      for (let i = 0; i < d.length; i += 4) {
-        const avg = (d[i] + d[i + 1] + d[i + 2]) / 3;
-        d[i] = d[i + 1] = d[i + 2] = avg;
-      }
-      ctx.putImageData(bwImageData, 0, 0);
+        const maskedImg = new Image();
+        maskedImg.src = offCanvas.toDataURL();
+        maskedImg.onload = () => {
+          ctx.drawImage(maskedImg, (canvas.width - newWidth) / 2, 0, newWidth, newHeight);
 
-      // Capa roja semitransparente
-      ctx.fillStyle = "rgba(212, 2, 2, 0.5)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+          const grayData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          ctx.putImageData(toGrayscale(grayData), 0, 0);
 
-      // Superponer SVG
-      const svgImg = new Image();
-      svgImg.onload = function () {
-        ctx.drawImage(svgImg, 0, 0, canvas.width, canvas.height);
-        canvas.style.opacity = 1; // Mostrar canvas con transición
-      };
-      svgImg.crossOrigin = "anonymous";
-      svgImg.src = SVG_URL;
-    }
-
-    upload.addEventListener("change", function (event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function () {
-        const img = new Image();
-        img.onload = function () {
-          canvas.style.opacity = 0;
-          processImage(img);
+          drawSVG();
         };
-        img.src = reader.result;
       };
-      reader.readAsDataURL(file);
+    };
+
+    upload.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        processImage(e.target.files[0]);
+      }
     });
 
-    function downloadImage() {
-      const link = document.createElement("a");
-      link.download = "cartel_pablo_alboran.png";
-      link.href = canvas.toDataURL("image/png");
+    downloadBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = 'cartel-global-tour.png';
+      link.href = canvas.toDataURL();
       link.click();
-    }
+    });
 
-    function resetApp() {
-      canvas.style.opacity = 0;
+    resetBtn.addEventListener('click', () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      upload.value = "";
-    }
+      ctx.fillStyle = '#d10607';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    });
   </script>
 </body>
 </html>
