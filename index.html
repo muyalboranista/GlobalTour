@@ -44,6 +44,8 @@
       box-shadow: 0 0 20px rgba(0,255,136,0.2);
       border-radius: 10px;
       max-width: 100%;
+      opacity: 0;
+      transition: opacity 0.6s ease-in-out;
     }
     .btn {
       background-color: #00ff88;
@@ -54,11 +56,18 @@
       font-size: 18px;
       font-weight: bold;
       cursor: pointer;
-      margin-top: 20px;
+      margin: 10px;
       transition: background-color 0.3s;
     }
     .btn:hover {
       background-color: #00cc6f;
+    }
+    .button-group {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
@@ -68,72 +77,79 @@
   <h1>Carteles Global Tour</h1>
   <input type="file" id="upload" accept="image/*" />
   <canvas id="canvas" width="1184" height="1800"></canvas>
-  <button class="btn" onclick="downloadImage()">Descargar Imagen</button>
+  <div class="button-group">
+    <button class="btn" onclick="downloadImage()">Descargar Imagen</button>
+    <button class="btn" onclick="resetApp()">Subir otra foto</button>
+  </div>
 
   <script>
     const upload = document.getElementById("upload");
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
-    const SVG_URL = "https://TU_USUARIO.github.io/NOMBRE_REPOSITORIO/global-tour.svg"; // ← Cambia esta URL
+    const SVG_URL = "https://muyalboranista.github.io/GlobalTour/GlobalTour.svg"; // ← Cambia esta URL
 
-    upload.addEventListener("change", async function (event) {
+    async function processImage(img) {
+      const offCanvas = document.createElement("canvas");
+      offCanvas.width = img.width;
+      offCanvas.height = img.height;
+      const offCtx = offCanvas.getContext("2d");
+      offCtx.drawImage(img, 0, 0);
+
+      const net = await bodyPix.load();
+      const segmentation = await net.segmentPerson(offCanvas);
+      const imageData = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
+      const data = imageData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const segIndex = i / 4;
+        if (segmentation.data[segIndex] === 0) {
+          data[i + 3] = 0;
+        }
+      }
+      offCtx.putImageData(imageData, 0, 0);
+
+      // Fondo rojo sólido
+      ctx.fillStyle = "#d10607";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const scale = Math.min(canvas.width / offCanvas.width, canvas.height / offCanvas.height);
+      const x = (canvas.width - offCanvas.width * scale) / 2;
+      const y = (canvas.height - offCanvas.height * scale) / 2;
+      ctx.drawImage(offCanvas, 0, 0, offCanvas.width, offCanvas.height, x, y, offCanvas.width * scale, offCanvas.height * scale);
+
+      // Blanco y negro
+      const bwImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = bwImageData.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const avg = (d[i] + d[i + 1] + d[i + 2]) / 3;
+        d[i] = d[i + 1] = d[i + 2] = avg;
+      }
+      ctx.putImageData(bwImageData, 0, 0);
+
+      // Capa roja semitransparente
+      ctx.fillStyle = "rgba(209, 6, 7, 0.5)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Superponer SVG
+      const svgImg = new Image();
+      svgImg.onload = function () {
+        ctx.drawImage(svgImg, 0, 0, canvas.width, canvas.height);
+        canvas.style.opacity = 1; // Mostrar canvas con transición
+      };
+      svgImg.crossOrigin = "anonymous";
+      svgImg.src = SVG_URL;
+    }
+
+    upload.addEventListener("change", function (event) {
       const file = event.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = async function () {
+      reader.onload = function () {
         const img = new Image();
-        img.onload = async function () {
-          const offCanvas = document.createElement("canvas");
-          offCanvas.width = img.width;
-          offCanvas.height = img.height;
-          const offCtx = offCanvas.getContext("2d");
-          offCtx.drawImage(img, 0, 0);
-
-          const net = await bodyPix.load();
-          const segmentation = await net.segmentPerson(offCanvas);
-          const imageData = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
-          const data = imageData.data;
-
-          for (let i = 0; i < data.length; i += 4) {
-            const segIndex = i / 4;
-            if (segmentation.data[segIndex] === 0) {
-              data[i + 3] = 0; // transparente
-            }
-          }
-
-          offCtx.putImageData(imageData, 0, 0);
-
-          // Fondo sólido rojo
-          ctx.fillStyle = "#d10607";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-          // Dibuja imagen centrada
-          const scale = Math.min(canvas.width / offCanvas.width, canvas.height / offCanvas.height);
-          const x = (canvas.width - offCanvas.width * scale) / 2;
-          const y = (canvas.height - offCanvas.height * scale) / 2;
-          ctx.drawImage(offCanvas, 0, 0, offCanvas.width, offCanvas.height, x, y, offCanvas.width * scale, offCanvas.height * scale);
-
-          // Blanco y negro
-          const bwImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const d = bwImageData.data;
-          for (let i = 0; i < d.length; i += 4) {
-            const avg = (d[i] + d[i + 1] + d[i + 2]) / 3;
-            d[i] = d[i + 1] = d[i + 2] = avg;
-          }
-          ctx.putImageData(bwImageData, 0, 0);
-
-          // Capa roja semitransparente
-          ctx.fillStyle = "rgba(209, 6, 7, 0.5)";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-          // Superponer SVG
-          const svgImg = new Image();
-          svgImg.onload = function () {
-            ctx.drawImage(svgImg, 0, 0, canvas.width, canvas.height);
-          };
-          svgImg.crossOrigin = "anonymous";
-          svgImg.src = SVG_URL;
+        img.onload = function () {
+          canvas.style.opacity = 0;
+          processImage(img);
         };
         img.src = reader.result;
       };
@@ -145,6 +161,12 @@
       link.download = "cartel_pablo_alboran.png";
       link.href = canvas.toDataURL("image/png");
       link.click();
+    }
+
+    function resetApp() {
+      canvas.style.opacity = 0;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      upload.value = "";
     }
   </script>
 </body>
