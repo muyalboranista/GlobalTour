@@ -18,6 +18,22 @@
       justify-content: flex-start;
       min-height: 100vh;
       padding: 20px;
+.intro {
+  background-color: #1a1a1a;
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 600px;
+  margin-bottom: 30px;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
+  font-size: 16px;
+  line-height: 1.6;
+  text-align: center;
+}
+.intro strong {
+  color: #00ff88;
+}
+      
     }
     h1 {
       font-family: 'Miracle Fairway', serif;
@@ -126,7 +142,21 @@
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix"></script>
 </head>
 <body>
-  <h1>Carteles Global Tour</h1>
+  <h1>Tu cartel Global Tour</h1>
+<div class="intro">
+  <p>
+    ¿Te gustaría protagonizar el <strong>cartel oficial del Global Tour de Pablo Alborán</strong>?  
+    ¡Ahora puedes hacerlo! ✨  
+  </p>
+  <p>
+    Solo tienes que <strong>subir tu foto de pequeño/a o tu favorita</strong> (si es sin fondo, ¡mucho mejor!), ajustar los controles a tu gusto y <strong>descargar el resultado final</strong>.
+  </p>
+  <p>
+    Después, ¡comparte tu cartel en redes con el hashtag <strong>#AlboránGlobalTour</strong>!  
+    Si quieres, también puedes <strong>etiquetarme o mencionarme</strong> en <strong>@muyalboranista</strong> para que pueda verlo ❤️
+  </p>
+</div>
+  
   <input type="file" id="upload" accept="image/*" />
 
   <div class="controls">
