@@ -122,14 +122,18 @@
       const bwImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const d = bwImageData.data;
       for (let i = 0; i < d.length; i += 4) {
-        const avg = (d[i] + d[i + 1] + d[i + 2]) / 3;
-        d[i] = d[i + 1] = d[i + 2] = avg;
-      }
+  const avg = (d[i] + d[i + 1] + d[i + 2]) / 3;
+  const contrast = avg < 128 ? avg * 0.8 : avg * 1.2;
+  const clamped = Math.max(0, Math.min(255, contrast));
+  d[i] = d[i + 1] = d[i + 2] = clamped;
+}
       ctx.putImageData(bwImageData, 0, 0);
 
       // Capa roja semitransparente
-      ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = "multiply";
+ctx.fillStyle = "#ff0000";
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+ctx.globalCompositeOperation = "source-over";
 
       // Superponer SVG
       const svgImg = new Image();
