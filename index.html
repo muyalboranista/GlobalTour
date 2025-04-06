@@ -6,12 +6,9 @@
   <title>Carteles Global Tour</title>
   <link href="https://fonts.googleapis.com/css2?family=Miracle+Fairway&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     body {
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       font-family: 'Arial', sans-serif;
       background-color: #0e0e0e;
       color: white;
@@ -20,13 +17,13 @@
       align-items: center;
       justify-content: flex-start;
       min-height: 100vh;
-      padding: 40px 20px;
+      padding: 20px;
     }
     h1 {
       font-family: 'Miracle Fairway', serif;
       font-size: 48px;
       color: #00ff88;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
     input[type="file"] {
       display: inline-block;
@@ -38,8 +35,25 @@
       cursor: pointer;
       border-radius: 8px;
     }
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 500px;
+    }
+    .control {
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      margin-bottom: 5px;
+    }
+    input[type="range"] {
+      width: 100%;
+    }
     canvas {
-      margin: 20px auto;
       border: 2px solid #333;
       box-shadow: 0 0 20px rgba(0,255,136,0.2);
       border-radius: 10px;
@@ -76,6 +90,30 @@
 <body>
   <h1>Carteles Global Tour</h1>
   <input type="file" id="upload" accept="image/*" />
+
+  <div class="controls">
+    <div class="control">
+      <label for="redIntensity">Intensidad del rojo:</label>
+      <input type="range" id="redIntensity" min="0" max="1" step="0.01" value="1">
+    </div>
+    <div class="control">
+      <label for="grainIntensity">Intensidad del grano:</label>
+      <input type="range" id="grainIntensity" min="0" max="1" step="0.01" value="0.2">
+    </div>
+    <div class="control">
+      <label for="scale">Tamaño de la imagen:</label>
+      <input type="range" id="scale" min="0.5" max="2" step="0.01" value="1">
+    </div>
+    <div class="control">
+      <label for="positionX">Posición X:</label>
+      <input type="range" id="positionX" min="-500" max="500" step="1" value="0">
+    </div>
+    <div class="control">
+      <label for="positionY">Posición Y:</label>
+      <input type="range" id="positionY" min="-500" max="500" step="1" value="0">
+    </div>
+  </div>
+
   <canvas id="canvas" width="1184" height="1800"></canvas>
   <div class="button-group">
     <button class="btn" onclick="downloadImage()">Descargar Imagen</button>
@@ -88,30 +126,24 @@
     const ctx = canvas.getContext("2d");
     const SVG_URL = "https://muyalboranista.github.io/GlobalTour/GlobalTour.svg";
 
-    function applyGrainEffect(ctx, width, height, intensity = 20) {
-      const imageData = ctx.getImageData(0, 0, width, height);
-      const data = imageData.data;
+    const redIntensity = document.getElementById("redIntensity");
+    const grainIntensity = document.getElementById("grainIntensity");
+    const scaleInput = document.getElementById("scale");
+    const posXInput = document.getElementById("positionX");
+    const posYInput = document.getElementById("positionY");
 
-      for (let i = 0; i < data.length; i += 4) {
-        const noise = (Math.random() - 0.5) * intensity;
-        data[i]     = Math.min(255, Math.max(0, data[i] + noise));
-        data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise));
-        data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise));
-      }
+    let userImage = null;
+    let maskCanvas = document.createElement("canvas");
 
-      ctx.putImageData(imageData, 0, 0);
-    }
-
-    async function processImage(img) {
+    async function segmentImage(img) {
       const net = await bodyPix.load();
-      const tempCanvas = document.createElement("canvas");
-      tempCanvas.width = img.width;
-      tempCanvas.height = img.height;
-      const tempCtx = tempCanvas.getContext("2d");
+      maskCanvas.width = img.width;
+      maskCanvas.height = img.height;
+      const tempCtx = maskCanvas.getContext("2d");
       tempCtx.drawImage(img, 0, 0);
 
-      const segmentation = await net.segmentPerson(tempCanvas);
-      const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+      const segmentation = await net.segmentPerson(maskCanvas);
+      const imageData = tempCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
       const data = imageData.data;
 
       for (let i = 0; i < data.length; i += 4) {
@@ -121,43 +153,64 @@
         }
       }
       tempCtx.putImageData(imageData, 0, 0);
+      userImage = maskCanvas;
+      renderCanvas();
+    }
 
-      // Fondo rojo
+    function renderCanvas() {
+      if (!userImage) return;
+
       ctx.fillStyle = "#ff0000";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Escalar imagen
-      const scale = canvas.height / tempCanvas.height;
-      const newWidth = tempCanvas.width * scale;
-      const x = (canvas.width - newWidth) / 2;
+      const scale = parseFloat(scaleInput.value);
+      const offsetX = parseFloat(posXInput.value);
+      const offsetY = parseFloat(posYInput.value);
 
-      // Blanco y negro + dibujar con multiply
-      const bwCanvas = document.createElement("canvas");
-      bwCanvas.width = canvas.width;
-      bwCanvas.height = canvas.height;
-      const bwCtx = bwCanvas.getContext("2d");
-      bwCtx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, x, 0, newWidth, canvas.height);
+      const newWidth = userImage.width * scale;
+      const newHeight = userImage.height * scale;
+      const x = (canvas.width - newWidth) / 2 + offsetX;
+      const y = (canvas.height - newHeight) / 2 + offsetY;
 
-      const bwImageData = bwCtx.getImageData(0, 0, canvas.width, canvas.height);
-      const d = bwImageData.data;
+      ctx.drawImage(userImage, 0, 0, userImage.width, userImage.height, x, y, newWidth, newHeight);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = imageData.data;
       for (let i = 0; i < d.length; i += 4) {
         const avg = (d[i] + d[i + 1] + d[i + 2]) / 3;
-        d[i] = d[i + 1] = d[i + 2] = avg;
+        d[i] = d[i + 1] = d[i + 2] = avg * parseFloat(redIntensity.value);
       }
-      bwCtx.putImageData(bwImageData, 0, 0);
+      ctx.putImageData(imageData, 0, 0);
 
       ctx.globalCompositeOperation = "multiply";
-      ctx.drawImage(bwCanvas, 0, 0);
+      ctx.fillStyle = `rgba(255, 0, 0, ${redIntensity.value})`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.globalCompositeOperation = "source-over";
 
-      // Superponer SVG
+      addGrainEffect(grainIntensity.value);
+      drawSVG();
+    }
+
+    function addGrainEffect(alpha) {
+      const grainCanvas = document.createElement("canvas");
+      grainCanvas.width = canvas.width;
+      grainCanvas.height = canvas.height;
+      const grainCtx = grainCanvas.getContext("2d");
+      const grainData = grainCtx.createImageData(canvas.width, canvas.height);
+      const data = grainData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        const val = Math.random() * 255;
+        data[i] = data[i + 1] = data[i + 2] = val;
+        data[i + 3] = alpha * 255;
+      }
+      grainCtx.putImageData(grainData, 0, 0);
+      ctx.drawImage(grainCanvas, 0, 0);
+    }
+
+    function drawSVG() {
       const svgImg = new Image();
       svgImg.onload = function () {
         ctx.drawImage(svgImg, 0, 0, canvas.width, canvas.height);
-
-        // Añadir efecto grain
-        applyGrainEffect(ctx, canvas.width, canvas.height);
-
         canvas.style.opacity = 1;
       };
       svgImg.crossOrigin = "anonymous";
@@ -167,17 +220,17 @@
     upload.addEventListener("change", function (event) {
       const file = event.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
       reader.onload = function () {
         const img = new Image();
-        img.onload = function () {
-          canvas.style.opacity = 0;
-          processImage(img);
-        };
+        img.onload = () => segmentImage(img);
         img.src = reader.result;
       };
       reader.readAsDataURL(file);
+    });
+
+    [redIntensity, grainIntensity, scaleInput, posXInput, posYInput].forEach(input => {
+      input.addEventListener("input", renderCanvas);
     });
 
     function downloadImage() {
