@@ -109,7 +109,7 @@
       tempCtx.putImageData(imageData, 0, 0);
 
       // Fondo rojo sólido
-      ctx.fillStyle = "#d10607";
+      ctx.fillStyle = "#FF0000";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Ajustar imagen a la altura del cartel
@@ -123,9 +123,7 @@
       const d = bwImageData.data;
       for (let i = 0; i < d.length; i += 4) {
   const avg = (d[i] + d[i + 1] + d[i + 2]) / 3;
-  const contrast = avg < 128 ? avg * 0.8 : avg * 1.2;
-  const clamped = Math.max(0, Math.min(255, contrast));
-  d[i] = d[i + 1] = d[i + 2] = clamped;
+  d[i] = d[i + 1] = d[i + 2] = avg;
 }
       ctx.putImageData(bwImageData, 0, 0);
 
