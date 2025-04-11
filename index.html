@@ -18,23 +18,20 @@
       justify-content: flex-start;
       min-height: 100vh;
       padding: 20px;
-.intro {
-  background-color: #1a1a1a;
-  color: white;
-  padding: 20px;
-  border-radius: 12px;
-  max-width: 600px;
-  margin-bottom: 30px;
-  box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
-  font-size: 16px;
-  line-height: 1.6;
-  text-align: center;
-}
-.intro strong {
-  color: #00ff00;
-}
-      
     }
+    .intro {
+      background-color: #1a1a1a;
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 600px;
+      margin-bottom: 30px;
+      box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
+      font-size: 16px;
+      line-height: 1.6;
+      text-align: center;
+    }
+    .intro strong { color: #00ff00; }
     h1 {
       font-family: 'Miracle Fairway', serif;
       font-size: 48px;
@@ -52,60 +49,32 @@
       border-radius: 8px;
     }
     .controls {
-  margin-top: 20px;
-  background-color: #FF0000;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
-  max-width: 500px;
-  width: 100%;
-}
-
-.control-group {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 15px;
-}
-
-.control-group label {
-  color: white;
-  font-size: 14px;
-  margin-bottom: 5px;
-}
-
-.control-group input[type="range"] {
-  -webkit-appearance: none;
-  width: 100%;
-  height: 6px;
-  background: #FF0000;
-  border-radius: 4px;
-  outline: none;
-}
-
-.control-group input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #d10607;
-  cursor: pointer;
-  border: 2px solid white;
-}
-
-.control-group input[type="range"]::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #d10607;
-  cursor: pointer;
-  border: 2px solid white;
-}
-    label {
+      margin-top: 20px;
+      background-color: #FF0000;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+      max-width: 500px;
+      width: 100%;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 15px;
+    }
+    .control-group label {
+      color: white;
+      font-size: 14px;
       margin-bottom: 5px;
     }
-    input[type="range"] {
+    .control-group input[type="range"], .control-group select {
       width: 100%;
+      height: 30px;
+      background: #FF0000;
+      border-radius: 4px;
+      outline: none;
+      color: black;
+      font-weight: bold;
     }
     canvas {
       border: 2px solid #333;
@@ -127,9 +96,7 @@
       margin: 10px;
       transition: background-color 0.3s;
     }
-    .btn:hover {
-      background-color: #00cc6f;
-    }
+    .btn:hover { background-color: #00cc6f; }
     .button-group {
       display: flex;
       flex-direction: row;
@@ -138,59 +105,65 @@
       gap: 10px;
     }
     .disclaimer {
-  font-size: 12px;
-  color: #aaa;
-  text-align: center;
-  max-width: 700px;
-  margin: 40px auto 10px;
-  padding: 10px 20px;
-  line-height: 1.4;
-}
-.disclaimer strong {
-  color: #fff;
-}
+      font-size: 12px;
+      color: #aaa;
+      text-align: center;
+      max-width: 700px;
+      margin: 40px auto 10px;
+      padding: 10px 20px;
+      line-height: 1.4;
+    }
+    .disclaimer strong { color: #fff; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix"></script>
 </head>
 <body>
   <h1>Tu cartel Global Tour</h1>
-<div class="intro">
-  <p>
-    ¿Te gustaría protagonizar el <strong>cartel oficial del Global Tour de Pablo Alborán</strong>?  
-    ¡Ahora puedes hacerlo! ✨  
-  </p>
-  <p>
-    Solo tienes que <strong>subir tu foto de pequeño/a o tu favorita</strong> (si es sin fondo, ¡mucho mejor!), ajustar los controles a tu gusto, esperar unos segundos a que se genere y <strong>descargar el resultado final</strong>.
-  </p>
-  <p>
-    Después, ¡comparte tu cartel en redes con el hashtag <strong>#AlboránGlobalTour</strong>!  
-    Si quieres, también puedes <strong>etiquetarme o mencionarme</strong> en <strong>@muyalboranista</strong> para que pueda verlo ❤️
-  </p>
-</div>
-  
+  <div class="intro">
+    <p>
+      ¿Te gustaría protagonizar el <strong>cartel oficial del Global Tour de Pablo Alborán</strong>?<br>
+      ¡Ahora puedes hacerlo! ✨
+    </p>
+    <p>
+      Solo tienes que <strong>subir tu foto de pequeño/a o tu favorita</strong> (si es sin fondo, ¡mucho mejor!), ajustar los controles a tu gusto, esperar unos segundos a que se genere y <strong>descargar el resultado final</strong>.
+    </p>
+    <p>
+      Después, ¡comparte tu cartel en redes con el hashtag <strong>#AlboránGlobalTour</strong>!<br>
+      También puedes <strong>etiquetarme o mencionarme</strong> en <strong>@muyalboranista</strong> para que pueda verlo ❤️
+    </p>
+  </div>
+
   <input type="file" id="upload" accept="image/*" />
 
   <div class="controls">
-    <div class="control">
+    <div class="control-group">
       <label for="redIntensity">Intensidad del rojo:</label>
       <input type="range" id="redIntensity" min="0" max="1" step="0.01" value="1">
     </div>
-    <div class="control">
+    <div class="control-group">
       <label for="grainIntensity">Intensidad del grano:</label>
       <input type="range" id="grainIntensity" min="0" max="1" step="0.01" value="0.2">
     </div>
-    <div class="control">
+    <div class="control-group">
       <label for="scale">Tamaño de la imagen:</label>
       <input type="range" id="scale" min="0.5" max="2" step="0.01" value="1">
     </div>
-    <div class="control">
+    <div class="control-group">
       <label for="positionX">Posición X (izquierda-derecha):</label>
       <input type="range" id="positionX" min="-500" max="500" step="1" value="0">
     </div>
-    <div class="control">
+    <div class="control-group">
       <label for="positionY">Posición Y (arriba-abajo):</label>
       <input type="range" id="positionY" min="-500" max="500" step="1" value="0">
+    </div>
+    <div class="control-group">
+      <label for="svgColor">Color de las letras:</label>
+      <select id="svgColor">
+<option value="verde">🟢 Verde</option>
+<option value="blanco">⬜ Blanco</option>
+<option value="negro">⬛ Negro</option>
+      </select>
     </div>
   </div>
 
@@ -204,16 +177,20 @@
     const upload = document.getElementById("upload");
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
-    const SVG_URL = "https://muyalboranista.github.io/GlobalTour/GlobalTour.svg";
 
     const redIntensity = document.getElementById("redIntensity");
     const grainIntensity = document.getElementById("grainIntensity");
     const scaleInput = document.getElementById("scale");
     const posXInput = document.getElementById("positionX");
     const posYInput = document.getElementById("positionY");
+    const svgColor = document.getElementById("svgColor");
 
     let userImage = null;
     let maskCanvas = document.createElement("canvas");
+
+    function getSVGUrl() {
+      return `https://muyalboranista.github.io/GlobalTour/GlobalTour_${svgColor.value}.svg`;
+    }
 
     async function segmentImage(img) {
       const net = await bodyPix.load();
@@ -225,7 +202,6 @@
       const segmentation = await net.segmentPerson(maskCanvas);
       const imageData = tempCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
       const data = imageData.data;
-
       for (let i = 0; i < data.length; i += 4) {
         const segIndex = i / 4;
         if (segmentation.data[segIndex] === 0) {
@@ -246,7 +222,6 @@
       const scale = parseFloat(scaleInput.value);
       const offsetX = parseFloat(posXInput.value);
       const offsetY = parseFloat(posYInput.value);
-
       const newWidth = userImage.width * scale;
       const newHeight = userImage.height * scale;
       const x = (canvas.width - newWidth) / 2 + offsetX;
@@ -294,7 +269,7 @@
         canvas.style.opacity = 1;
       };
       svgImg.crossOrigin = "anonymous";
-      svgImg.src = SVG_URL;
+      svgImg.src = getSVGUrl();
     }
 
     upload.addEventListener("change", function (event) {
@@ -309,7 +284,7 @@
       reader.readAsDataURL(file);
     });
 
-    [redIntensity, grainIntensity, scaleInput, posXInput, posYInput].forEach(input => {
+    [redIntensity, grainIntensity, scaleInput, posXInput, posYInput, svgColor].forEach(input => {
       input.addEventListener("input", renderCanvas);
     });
 
@@ -326,12 +301,13 @@
       upload.value = "";
     }
   </script>
+
   <footer class="disclaimer">
-  <p>
-    Esta aplicación es un proyecto personal y sin ánimo de lucro, creado exclusivamente para promocionar de forma fan-made la próxima gira de <strong>Pablo Alborán</strong>.  
-    No se almacena ninguna imagen ni dato personal: todo el proceso ocurre en tu navegador.  
-    Todos los derechos sobre la imagen oficial del cartel pertenecen a Pablo Alborán, Warner Music Spain y GTS.
-  </p>
-</footer>
+    <p>
+      Esta aplicación es un proyecto personal y sin ánimo de lucro, creado exclusivamente para promocionar de forma fan-made la próxima gira de <strong>Pablo Alborán</strong>.  
+      No se almacena ninguna imagen ni dato personal: todo el proceso ocurre en tu navegador.  
+      Todos los derechos sobre la imagen oficial del cartel pertenecen a Pablo Alborán, Warner Music Spain y GTS.
+    </p>
+  </footer>
 </body>
 </html>
